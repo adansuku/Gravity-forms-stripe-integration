@@ -16,3 +16,42 @@ function activate_subscription_employer ($entry, $form) {
 	if(isset(update_user_meta( get_current_user_id(), '_zipcode', $entry['5.5']) ));
 	if(isset(update_user_meta( get_current_user_id(), '_country', $entry['5.6']) ));
 }
+
+/*--------------------------------------------------------------
+# Unsubscription and table function and shortcode
+--------------------------------------------------------------*/
+function get_all_subscriptions($id, $user_id = null) {
+	$id=7;
+	$search_criteria2['field_filters'][] = array( 'key' => 'created_by', 'value' => $user_id );			
+	$sorting = array();
+	$paging = array( 'offset' => 0, 'page_size' => 30 );
+	$form = $id;
+	$form_entries = GFAPI::get_entries( $form, $search_criteria2, $sorting, $paging );
+	$results = array();
+
+	foreach ($form_entries as $entry){
+		$result = array();
+		$feed = gf_stripe()->get_payment_feed( $entry );
+		$subscription_name = $feed['meta']['subscription_name'];
+		$entry_id = $entry['id'];
+		$status = $entry['payment_status'];
+		$amount = number_format(floatval($entry['payment_amount']), 2) . "$ / " . $feed['meta']['billingCycle_unit'];
+		$start_date = strtotime($entry['date_created']);
+		$format_date = date('m/d/y', $start_date);
+
+		$length = $feed['meta']['billingCycle_length']." ".$feed['meta']['billingCycle_unit'];
+			$result['lit_entry_id'] = $entry_id;
+			$result['lit_subscription_name'] = $subscription_name;
+			$result['lit_date'] = $format_date;
+			$result['lit_amount'] = $amount;
+			$result['lit_status'] = $status;
+			
+			$results[$entry_id] = $result;
+	}
+	return  $results;
+}
+
+
+
+
+
