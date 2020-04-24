@@ -52,6 +52,64 @@ function get_all_subscriptions($id, $user_id = null) {
 }
 
 
+/*--------------------------------------------------------------
+# Shortcode
+--------------------------------------------------------------*/
+function get_all_subscriptions_shortcode($id = 0){
+		
+
+		ob_start();
+		
+		$results = get_all_subscriptions($id, get_current_user_id());
+		$status = get_user_meta( get_current_user_id(), '_subscription_status', true );
+		
+		wp_enqueue_style('stripe_1_css', get_stylesheet_directory_uri() . '/styles/stripe/jquery.dataTables.min.css');
+		wp_enqueue_style('stripe_2_css', get_stylesheet_directory_uri() . '/styles/stripe/responsive.dataTables.min.css');
+		wp_enqueue_style('stripe_3_css', get_stylesheet_directory_uri() . '/styles/stripe/dataTables.bootstrap.css');
+		wp_enqueue_style('stripe_4_css', get_stylesheet_directory_uri() . '/styles/stripe/custom.css');
+		
+		wp_enqueue_script('stripe_1_js', get_stylesheet_directory_uri() . '/js/stripe/jquery.dataTables.min.js', array('jquery') );
+		wp_enqueue_script('stripe_2_js', get_stylesheet_directory_uri() . '/js/stripe/dataTables.responsive.min.js', array('jquery') );
+		wp_enqueue_script('stripe_3_js', get_stylesheet_directory_uri() . '/js/stripe/custom.js', array('jquery') );
+
+		if ($status == 'Active'){
+			echo  '<a class="cancel_subscription_popup" style="border-bottom: 2px solid !important; width: 100%; display: block; margin: 20px 0px;" href="#">Cancel my subscription</a>';
+			echo 'Your Employer subscription is active or subscription period not end';
+		} else{
+			echo '<div class="upgrade_button">
+			<a class="subscription-employer-pro" href="#" style="border-bottom: 2px solid !important;">Change/Upgrade my role</a>
+			<strong><span>Employer Pro Subscription status:</span></strong> ' . $status . 
+			'</div>';
+		}
+		
+		$html = "<div class='table-responsive'>";
+			$html .= "<table id='user-subscriptions' class='table dt-responsive' cellspacing='0' width='100%'>";
+			$html .= ' <thead>
+				<tr class="gss_item">
+					<th class="name">Subscription Name</th>
+					<th class="date min-tablet-p">Start Date</th>
+					<th class="amount min-tablet-p">Amount / Term</th>
+					<th class="status">Status</th>
+				</tr>
+			</thead>
+			<tbody>';
+
+		foreach ($results as $result){
+			
+			$html .= "<tr class='gss_item'>";				
+				$html .= "<td class='name'>".$result['lit_subscription_name']."</td>";
+				$html .= "<td class='date'>".$result['lit_date']."</td>";
+				$html .= "<td class='amount'>".$result['lit_amount']."</td>";
+				$html .= "<td class='status '>".$result['lit_status']."</td>";
+			$html .= "</tr>";
+		}
+		$html .= "</tbody></table></div>";
+		echo $html;
+				
+	return ob_get_clean();
+}
+
+add_shortcode('get_all_subscriptions_shortcode', 'get_all_subscriptions_shortcode');
 
 
 
