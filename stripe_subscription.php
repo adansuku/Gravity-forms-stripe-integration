@@ -123,3 +123,91 @@ function get_stripe_customer_id( $customer_id, $feed, $entry, $form ) {
 
 	return $customer_id;
 }
+
+
+
+
+/*--------------------------------------------------------------
+# Unsubscribe user form
+--------------------------------------------------------------*/
+//logged in user can cancel subscription with a cancel form.
+add_action( 'gform_after_submission_6', 'pwm_cancel_subscription', 10, 2 );
+function pwm_cancel_subscription( $entry, $form ) {
+
+	//SET SUBSCRIPTION TO CANCEL
+	//get original current users entry id from subscription form.
+
+	$entry_id = get_user_meta( get_current_user_id(), 'pwm_subscription_entry_id', true );
+	if ( $entry_id > 0 ) {
+		//now cancel that old entry's subscription
+		$old_entry = GFAPI::get_entry( $entry_id );
+		$feed      = is_wp_error( $old_entry ) || ! function_exists( 'gf_stripe' ) ? false : gf_stripe()->get_payment_feed( $old_entry );
+
+		if ( is_array( $feed ) && rgar( $feed, 'addon_slug' ) == 'gravityformsstripe' && gf_stripe()->cancel( $old_entry, $feed ) ) {
+			gf_stripe()->cancel_subscription( $old_entry, $feed );
+
+			//destroy entry id so they cant cancel twice... not sure it does anything though if they try to
+			update_user_meta( get_current_user_id(), 'pwm_subscription_entry_id', '' );
+			//set them to subscribed till period ends. in limbo state.
+			update_user_meta( get_current_user_id(), 'pwm_subscribed_till_end', true );
+		}
+	}
+
+}
+
+function pwm_remove_user_role($user_id, $role){
+	$employer_pro = get_userdata($user_id);
+	$employer_pro->remove_role($role); 	
+	update_user_meta( $user_id, '_subscription_status', "Inactive" );
+}
+
+
+
+/**
+ * Sets the role for the user as specified in the function.
+ * @param    int $user_id The ID of the user for whom we're updating the role.
+ */
+ 
+function pwm_set_user_role( $user_id, $role ) {
+	
+	$user = new \WP_User( $user_id );
+	$user_roles=$user->roles;
+
+	if (in_array('candidate', $user_roles)){
+		$user->remove_role('candidate');
+	}
+
+	if (in_array('supporter', $user_roles)){
+		$user->remove_role('supporter');
+	}
+	
+	$user->add_role('employer');
+	$user->add_role( $role );	
+}
+
+
+
+
+
+/* Other Forms */
+function manage_my_subscription($entry, $form){	
+	$selectedItem = rgar( $entry, '7' );
+	$user = get_userdata(get_current_user_id());
+	$user_roles=$user->roles;
+	
+	switch ($selectedItem) {
+	    case strpos($selectedItem, 'supporter'):
+	        $selectedItem = 'supporter';
+	        $user->remove_role('candidate');
+	        $user->remove_role('employer');
+	        break;
+	    case strpos($selectedItem, 'candidate'):
+	        $selectedItem = 'candidate';
+	        $user->remove_role('supporter');
+			$user->remove_role('employer');
+	        break;
+	}	
+	$user->add_role($selectedItem);	
+}
+add_action( 'gform_after_submission_7', 'manage_my_subscription', 10, 2 );
+?>
