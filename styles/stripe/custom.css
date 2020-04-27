@@ -1,5 +1,16 @@
-.subscription-employer-pro,
-.cancel_subscription_popup {
+/*GSS TABLE*/
+
+.table-responsive table.dataTable thead tr th{
+	color: #7a7a7a !important;
+}
+
+
+table.dataTable thead th, table.dataTable thead td {
+    padding: 10px 18px;
+    border-bottom: 1px solid #f2c771 !important;
+}
+
+.subscription-employer-pro {
     font-size: 20px;
     font-weight: 500;
     padding: .3em 1em;
@@ -16,7 +27,7 @@
 }
 
 .upgrade_button{
-	padding: 30px 0px;
+	padding: 20px 0px;
 }
 
 .table-responsive table.dataTable thead  tr th{
